@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from datetime import date, datetime
 from typing import Optional
 
@@ -9,7 +9,8 @@ class WorkoutBase(BaseModel):
     reps: int = Field(gt=0, description="Number of repetitions")
     weight_lbs: float = Field(ge=0, description="Weight in pounds")
 
-    @validator('exercise')
+    @field_validator('exercise')
+    @classmethod
     def exercise_must_not_be_empty(cls, v):
         if not v or not v.strip():
             raise ValueError('Exercise name cannot be empty')
@@ -21,8 +22,7 @@ class WorkoutIn(WorkoutBase):
 
 
 class WorkoutOut(WorkoutBase):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     created_at: datetime
-
-    class Config:
-        from_attributes = True
