@@ -82,3 +82,6 @@ POST /workouts/
 - Environment variable `DATABASE_URL` for production database
 - Alembic for database migrations
 - FastAPI auto-generates OpenAPI documentation
+
+TO INSTALL
+- portaudio

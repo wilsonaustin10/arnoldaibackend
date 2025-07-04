@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.endpoints import audio, workouts
 from db.database import engine, Base
+from dotenv import load_dotenv
+
+load_dotenv()
 
 Base.metadata.create_all(bind=engine)
 

@@ -1,14 +1,25 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+import base64
+import json
+import os
+from fastapi import APIRouter, UploadFile, File, HTTPException, websockets
 import tempfile
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 import io
 import whisper
+from elevenlabs.client import ElevenLabs
+from dotenv import load_dotenv
+
+load_dotenv()
 
 router = APIRouter(prefix="/audio", tags=["audio"])
 
+voice_id = "ruOXgAPEKXx6RHpsL7YE"
 class TTSRequest(BaseModel):
     text: str
+
+
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
 
 @router.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)):
@@ -28,10 +39,22 @@ async def transcribe_audio(file: UploadFile = File(...)):
     return {"transcript": result["text"]}
 
 @router.post("/tts")
-async def text_to_speech(request: TTSRequest):
-    # Placeholder: Replace with actual ElevenLabs API call
-    # Example: audio_bytes = elevenlabs_tts(request.text)
-    # For now, return a dummy audio file
-    dummy_audio = io.BytesIO(b"RIFF....WAVEfmt ")  # Not a real audio file
+async def generate_audio(request: TTSRequest):
+    
+    elevenlabs = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+    # Generate speech from text
+    audio_iter = elevenlabs.text_to_speech.convert(
+        text=request.text,
+        voice_id=voice_id,
+        model_id="eleven_multilingual_v2",  # or another model if you prefer
+
+    )
+    # Save to a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+        for chunk in audio_iter:
+            temp_audio.write(chunk)
+        temp_audio_path = temp_audio.name
+
+    # Return the file as a response
     headers = {"Content-Disposition": "attachment; filename=output.wav"}
-    return StreamingResponse(dummy_audio, media_type="audio/wav", headers=headers)
+    return FileResponse(temp_audio_path, media_type="audio/wav", headers=headers)
