@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.endpoints import workouts
+from api.endpoints import audio, workouts
 from db.database import engine, Base
 
 Base.metadata.create_all(bind=engine)
@@ -21,6 +21,7 @@ app.add_middleware(
 )
 
 app.include_router(workouts.router)
+app.include_router(audio.router)
 
 
 @app.get("/")
