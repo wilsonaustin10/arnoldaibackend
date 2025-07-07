@@ -41,21 +41,25 @@ async def transcribe_audio(file: UploadFile = File(...)):
 
 @router.post("/tts")
 async def generate_audio(request: TTSRequest):
-    
     elevenlabs = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-    # Generate speech from text
+    # # Generate speech from text
     audio_iter = elevenlabs.text_to_speech.convert(
         text=request.text,
         voice_id=voice_id,
-        model_id="eleven_multilingual_v2",  # or another model if you prefer
-
+        model_id="eleven_flash_v2_5",  # or another model if you prefer
+        # output_format="wav_44100"
     )
-    # Save to a temporary file
+
+    # Return the file as a response
+    # temp_audio_path = "assets/sample.wav"
+    # with open(temp_audio_path, "rb") as f:
+    #     audio_bytes = f.read()
+    # # Save to a temporary file
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+
         for chunk in audio_iter:
             temp_audio.write(chunk)
         temp_audio_path = temp_audio.name
-
-    # Return the file as a response
+        
     headers = {"Content-Disposition": "attachment; filename=output.wav"}
     return FileResponse(temp_audio_path, media_type="audio/wav", headers=headers)
