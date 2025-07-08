@@ -36,7 +36,7 @@ nest-asyncio==1.6.0
 networkx==3.5
 numba==0.61.2
 numpy==2.2.6
-openai==1.35.7
+openai==1.93.2
 openai-whisper==20250625
 packaging==25.0
 parso==0.8.4
