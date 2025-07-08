@@ -36,10 +36,11 @@ if not OPENAI_API_KEY:
 
 try:
     openai_client = OpenAI(api_key=OPENAI_API_KEY)
-except TypeError:
+except TypeError as err:
     # Fallback for compatibility issues
     import openai
     openai.api_key = OPENAI_API_KEY
+    print("[Audio] Error: ", err)
     # Create a wrapper to maintain compatibility
     class OpenAIWrapper:
         class Audio:
@@ -165,13 +166,19 @@ async def process_voice_command(
             temp_audio_path = temp_audio.name
         
         # Return both transcript and audio response
-        return JSONResponse(
-            content={
-                "transcript": transcript,
-                "ai_response": ai_response,
-                "audio_url": f"/audio/download/{temp_audio_path.split('/')[-1]}"
-            }
+        headers = {"Content-Disposition": "attachment; filename=output.wav"}
+        return FileResponse(
+            temp_audio_path,
+            media_type="audio/wav",
+            headers=headers
         )
+        # return JSONResponse(
+        #     content={
+        #         "transcript": transcript,
+        #         "ai_response": ai_response,
+        #         "audio_url": f"/audio/download/{temp_audio_path.split('/')[-1]}"
+        #     }
+        # )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
