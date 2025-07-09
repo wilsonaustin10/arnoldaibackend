@@ -2,7 +2,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.endpoints import audio, workouts
+from api.endpoints import audio, workouts, realtime_audio
 from db.database import engine, Base
 from dotenv import load_dotenv
 
@@ -26,6 +26,7 @@ app.add_middleware(
 
 app.include_router(workouts.router)
 app.include_router(audio.router)
+app.include_router(realtime_audio.router)
 
 
 @app.get("/")
