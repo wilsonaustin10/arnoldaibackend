@@ -10,9 +10,11 @@ from openai import OpenAI
 from elevenlabs.client import ElevenLabs
 from dotenv import load_dotenv
 from typing import List, Dict, Optional
+import time
 
 from services.voice_agent import VoiceAgent
 from services.workout_service import WorkoutService
+from utils import timer
 
 load_dotenv()
 
@@ -141,23 +143,29 @@ async def process_voice_command(
         audio_file = io.BytesIO(audio_data)
         audio_file.name = file.filename or "audio.wav"
         
-        transcript = openai_client.audio.transcriptions.create(
-            model="whisper-1",
-            file=audio_file,
-            response_format="text"
+        with timer("Transcription"):
+            transcript = openai_client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                response_format="text"
         )
-        
+
+        print("Transcribed text:", transcript)
         # Step 2: Process with AI agent
         voice_agent = VoiceAgent(openai_client, workout_service)
-        ai_response = voice_agent.process_voice_command(transcript)
         
+        with timer("Process Voice"):
+            ai_response = voice_agent.process_voice_command(transcript)
+        
+        print("Processed response:", ai_response)
         # Step 3: Convert response to speech
-        elevenlabs = ElevenLabs(api_key=ELEVENLABS_API_KEY)
-        audio_iter = elevenlabs.text_to_speech.convert(
-            text=ai_response,
-            voice_id=voice_id,
-            model_id="eleven_flash_v2_5"
-        )
+        with timer("ElevenLabs tts"):
+            elevenlabs = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+            audio_iter = elevenlabs.text_to_speech.convert(
+                text=ai_response,
+                voice_id=voice_id,
+                model_id="eleven_flash_v2_5"
+            )
         
         # Save audio to temporary file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
@@ -172,14 +180,6 @@ async def process_voice_command(
             media_type="audio/wav",
             headers=headers
         )
-        # return JSONResponse(
-        #     content={
-        #         "transcript": transcript,
-        #         "ai_response": ai_response,
-        #         "audio_url": f"/audio/download/{temp_audio_path.split('/')[-1]}"
-        #     }
-        # )
-        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
 
