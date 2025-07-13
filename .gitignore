@@ -43,3 +43,6 @@ venv.bak/
 htmlcov/
 .pytest_cache/
 .hypothesis/
+
+# Frontend directory (separate repository)
+frontend/

@@ -36,7 +36,7 @@ if not OPENAI_API_KEY:
 
 try:
     openai_client = OpenAI(api_key=OPENAI_API_KEY)
-except TypeError as err:
+except Exception as err:
     # Fallback for compatibility issues
     import openai
     openai.api_key = OPENAI_API_KEY
