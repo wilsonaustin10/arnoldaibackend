@@ -20,6 +20,7 @@ class RealtimeVoiceAgent:
     def __init__(self, api_key: str, workout_service: WorkoutService):
         self.client = AsyncOpenAI(api_key=api_key)
         self.workout_service = workout_service
+        self.connection_manager = None # Add this line
         self.connection = None
         self.is_connected = False
         self.audio_buffer = bytearray()
@@ -33,10 +34,10 @@ class RealtimeVoiceAgent:
     async def connect(self):
         """Establish WebSocket connection to OpenAI Realtime API"""
         try:
-            self.connection = await self.client.beta.realtime.connect(
+            self.connection_manager = self.client.beta.realtime.connect(
                 model="gpt-4o-realtime-preview"
             )
-            
+            self.connection = await self.connection_manager.__aenter__()
             # Configure session
             await self.connection.session.update(
                 session={
@@ -46,7 +47,6 @@ class RealtimeVoiceAgent:
                     'input_audio_format': 'pcm16',
                     'output_audio_format': 'pcm16',
                     'input_audio_transcription': {
-                        'enabled': True,
                         'model': 'whisper-1'
                     },
                     'turn_detection': {
@@ -343,7 +343,8 @@ Respond concisely and naturally. Use a friendly, encouraging tone."""
     
     async def disconnect(self):
         """Close the WebSocket connection"""
-        if self.connection:
+        if self.connection_manager:
+            
             self.is_connected = False
-            await self.connection.close()
+            await self.connection_manager.__aexit__(None, None, None)
             logger.info("Disconnected from Realtime API")
